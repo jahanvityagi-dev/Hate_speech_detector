@@ -1,0 +1,32 @@
+# Core LLM + Embedding
+openai>=1.0.0
+sentence-transformers>=2.2.2
+faiss-cpu>=1.7.4
+
+# Web Interface
+streamlit
+whisper
+
+# Utility
+python-dotenv>=1.0.0
+tqdm>=4.64.0
+pydantic>=2.0.0
+fastapi
+uvicorn[standard]
+pytest
+pytest-cov
+python-multipart
+
+streamlit-webrtc
+soundfile
+av
+numpy
+requests
+
+
+
+streamlit-webrtc
+requests>=2.31.0
+audio-recorder-streamlit
+pydub>=0.25.1
+streamlit-audiorecorder

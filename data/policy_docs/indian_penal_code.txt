@@ -1,0 +1,31 @@
+Title: Indian Penal Code Provisions on Hate Speech
+
+Source: https://en.wikipedia.org/wiki/Hate_speech_laws_in_India
+
+Section 153A:
+Criminalizes promoting enmity between groups on grounds like religion, race, place of birth, residence, language, etc., by words, spoken or written, or by signs or visual representations.
+
+Section 295A:
+Punishes deliberate and malicious acts intended to outrage religious feelings by insulting religion or religious beliefs through any form of expression.
+
+Legal Interpretation:
+The intent and impact of the speech are critical factors. Courts assess whether the accused deliberately incited disharmony or hurt sentiments, often requiring clear evidence of malice.
+
+Enforcement:
+These offenses can lead to imprisonment (up to 3 years), fines, or both. Police investigations require proper authorization, and legal procedures vary by state.
+
+Edge Cases:
+- Satirical or artistic performances (e.g., stand-up comedy) are protected under Article 19(1)(a) but may face scrutiny if they mimic specific religious rituals disrespectfully.
+- Academic debate or journalistic critique is generally permitted unless expressed in a grossly offensive manner.
+- Historical analysis of caste dynamics is allowed unless it incites current inter-group conflict.
+
+Controversies and Reform Debates:
+Critics argue these laws are sometimes misused to suppress dissent or political speech. Ongoing legal and parliamentary discussions aim to balance public order and free expression.
+
+Real-Life Examples:
+- Book bans due to offensive religious depictions (e.g., "The Satanic Verses")
+- Arrests following viral social media posts on religious leaders
+- Legal actions against public speeches during election rallies
+
+Guidance to Platforms:
+Social platforms are expected to comply with Indian IT rules and take action against content that violates these sections or risks inciting violence.

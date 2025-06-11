@@ -1,0 +1,32 @@
+# Python
+venv/
+*.egg-info/
+*.pkl
+*.log
+
+# Environment
+.env
+.env.*
+
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# VS Code settings
+.vscode/
+
+# Test cache
+.pytest_cache/
+.coverage
+
+# Data & model files
+*.bin
+*.h5
+*.ckpt
+*.pt
+*.onnx
+
+# FAISS and vector store
+vector_store/
+index_store/

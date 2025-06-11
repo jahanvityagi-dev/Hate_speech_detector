@@ -1,0 +1,31 @@
+Title: Reddit Content Policy on Hate Speech
+
+Source: https://redditinc.com/policies/reddit-rules
+
+Overview:
+Reddit aims to foster community and belonging, prohibiting content that attacks marginalized or vulnerable groups. Hate speech is strictly prohibited across all communities.
+
+Rule 1: Remember the Human:
+Users must not harass, bully, or threaten violence. Communities and users promoting hate based on identity or vulnerability will be banned without prior notice.
+
+Protected Attributes:
+Includes race, ethnicity, national origin, religion, gender, gender identity, sexual orientation, disability, caste, and immigration status.
+
+Enforcement:
+Violations may result in content removal, community bans, or user suspensions. Admins use both automated systems and human reviews to enforce rules consistently.
+
+Reporting Mechanism:
+Users can report violations through Reddit's reporting tools for review by moderators and administrators. Appeals are available for actions taken in error.
+
+Examples of Prohibited Content:
+- Posts dehumanizing specific religious groups as "vermin"
+- Memes mocking individuals based on disabilities or gender identity
+- Slurs targeted at minority ethnic groups, even in a joking manner
+
+Edge Cases and Clarifications:
+- Satirical or ironic content that uses hate-related language will be reviewed based on intent, context, and reporting frequency.
+- Discussions of controversial topics (e.g., immigration laws, gender roles) are allowed if framed respectfully without generalization or targeting.
+- Historical references are permitted unless used to glorify past atrocities or dehumanize others.
+
+Updates and Community Feedback:
+Reddit periodically updates these rules based on emerging threats and user feedback. Moderators are encouraged to escalate borderline cases to admins.
