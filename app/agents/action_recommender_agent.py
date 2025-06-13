@@ -1,3 +1,4 @@
+from app.agents.error_handler_agent import ErrorHandlerAgent
 class ActionRecommenderAgent:
     """
     Maps classification labels to moderation actions.
@@ -25,13 +26,23 @@ class ActionRecommenderAgent:
                 "action": "Manual Review",
                 "reason": "Content is unclear; requires human evaluation."
             }
+            
         }
+        self.error_handler = ErrorHandlerAgent()
+
 
     def recommend(self, label: str) -> dict:
         """
         Returns recommended action and explanation for a classification label.
         """
-        return self.action_map.get(label, {
-            "action": "Manual Review",
-            "reason": "Unknown label; escalate to a moderator."
-        })
+        # return self.action_map.get(label, {
+        #     "action": "Manual Review",
+        #     "reason": "Unknown label; escalate to a moderator."
+        # })
+        try:
+            return self.action_map.get(label, {
+                "action": "Manual Review",
+                "reason": "Unknown label; escalate to a moderator."
+            })
+        except Exception as e:
+            return self.error_handler.handle_error("ActionRecommenderAgent::recommend", str(e))

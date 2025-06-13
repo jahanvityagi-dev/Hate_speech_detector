@@ -3,6 +3,7 @@ import faiss
 import numpy as np
 from pathlib import Path
 from app.services.embedding_service import EmbeddingService
+from app.agents.error_handler_agent import ErrorHandlerAgent
 
 POLICY_DIR = Path("data/policy_docs/")
 EMBEDDING_DIM = 384  # for MiniLM
@@ -64,21 +65,75 @@ class HybridRetrieverAgent:
         self.embedding_service = EmbeddingService()
         self.policy_dir = Path(policy_dir)
         self._load_policy_documents()
+        self.error_handler = ErrorHandlerAgent()
+
+
+    # def _load_policy_documents(self):
+    #     """
+    #     Read and index all policy text files.
+    #     """
+    #     # for file in self.policy_dir.glob("*.txt"):
+    #     #     with open(file, "r", encoding="utf-8") as f:
+    #     #         content = f.read()
+
+    #     #     # Chunk on paragraphs
+    #     #     chunks = [para.strip() for para in content.split("\n\n") if len(para.strip()) > 30]
+    #     #     print(f"Loaded {len(chunks)} chunks from {file.name}")
+    #     #     self.embedding_service.add_to_index(chunks, file.name)
+
+    #     # print(f"Built embeddings with shape: {self.embedding_service.index.ntotal, 384}")
+    #     try:
+    #         for file in self.policy_dir.glob("*.txt"):
+    #             with open(file, "r", encoding="utf-8") as f:
+    #                 content = f.read()
+
+    #             chunks = [para.strip() for para in content.split("\n\n") if len(para.strip()) > 30]
+    #             print(f"Loaded {len(chunks)} chunks from {file.name}")
+    #             self.embedding_service.add_to_index(chunks, file.name)
+
+    #         print(f"Built embeddings with shape: {self.embedding_service.index.ntotal, 384}")
+
+    #     except Exception as e:
+    #         self.error_handler.handle_error("HybridRetrieverAgent::_load_policy_documents", str(e))
 
     def _load_policy_documents(self):
-        """
-        Read and index all policy text files.
-        """
-        for file in self.policy_dir.glob("*.txt"):
-            with open(file, "r", encoding="utf-8") as f:
-                content = f.read()
+        try:
+            for file in self.policy_dir.glob("*.txt"):
+                with open(file, "r", encoding="utf-8") as f:
+                    content = f.read()
 
-            # Chunk on paragraphs
-            chunks = [para.strip() for para in content.split("\n\n") if len(para.strip()) > 30]
-            print(f"Loaded {len(chunks)} chunks from {file.name}")
-            self.embedding_service.add_to_index(chunks, file.name)
+                raw_chunks = [para.strip() for para in content.split("\n\n") if len(para.strip()) > 30]
+                combined_chunks = []
+                skip_next = False
 
-        print(f"Built embeddings with shape: {self.embedding_service.index.ntotal, 384}")
+                for i in range(len(raw_chunks)):
+                    if skip_next:
+                        skip_next = False
+                        continue
+
+                    if raw_chunks[i].lower().startswith("title:"):
+                        # Combine title + next paragraph
+                        if i + 1 < len(raw_chunks):
+                            combined = f"{raw_chunks[i]}\n\n{raw_chunks[i+1]}"
+                            combined_chunks.append(combined)
+                            skip_next = True
+                        else:
+                            combined_chunks.append(raw_chunks[i])
+                    else:
+                        combined_chunks.append(raw_chunks[i])
+
+                print(f"Loaded {len(combined_chunks)} combined chunks from {file.name}")
+                self.embedding_service.add_to_index(combined_chunks, file.name)
+
+            print(f"Built embeddings with shape: {self.embedding_service.index.ntotal, 384}")
+
+        except Exception as e:
+            self.error_handler.handle_error("HybridRetrieverAgent::_load_policy_documents", str(e))
+
 
     def retrieve(self, input_text, top_k=3):
-        return self.embedding_service.search(input_text, top_k)
+        # return self.embedding_service.search(input_text, top_k)
+        try:
+            return self.embedding_service.search(input_text, top_k)
+        except Exception as e:
+            return self.error_handler.handle_error("HybridRetrieverAgent::retrieve", str(e))

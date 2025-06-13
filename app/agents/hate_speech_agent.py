@@ -2,6 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 from openai import AzureOpenAI
+from app.agents.error_handler_agent import ErrorHandlerAgent
 
 load_dotenv()
 
@@ -16,6 +17,7 @@ LABELS = ["Hate", "Toxic", "Offensive", "Neutral", "Ambiguous"]
 class HateSpeechDetectionAgent:
     def __init__(self, deployment=None):
         self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT")
+        self.error_handler = ErrorHandlerAgent()
 
     def classify(self, input_text: str) -> dict:
         prompt = f"""
@@ -52,7 +54,8 @@ Return your output in this JSON format:
             return result
 
         except Exception as e:
-            return {
-                "label": "Ambiguous",
-                "explanation": f"Error: {str(e)}"
-            }
+            # return {
+            #     "label": "Ambiguous",
+            #     "explanation": f"Error: {str(e)}"
+            # }
+            return self.error_handler.handle_error("HateSpeechAgent", str(e))

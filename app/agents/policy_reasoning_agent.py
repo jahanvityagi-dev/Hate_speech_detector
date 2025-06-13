@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
+from app.agents.error_handler_agent import ErrorHandlerAgent
 
 load_dotenv()
 
@@ -18,6 +19,7 @@ class PolicyReasoningAgent:
 
     def __init__(self, model=None, deployment=None):
         self.model = model or os.getenv("AZURE_OPENAI_DEPLOYMENT")
+        self.error_handler = ErrorHandlerAgent()
 
     def generate_explanation(self, input_text: str, label: str, policy_snippets: list[dict]) -> str:
         """
@@ -55,4 +57,4 @@ Respond with a paragraph explaining the reasoning.
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            return f"Error generating explanation: {str(e)}"
+            return self.error_handler.handle_error("PolicyReasoningAgent", "generate_explanation", e)
