@@ -1,5 +1,8 @@
 from config import Config
 from pathlib import Path
+from typing import Union, IO
+from pathlib import Path
+
 
 class ValidationError(Exception):
     pass
@@ -27,7 +30,17 @@ class AudioValidator:
             raise ValidationError("File too large")
 
     @staticmethod
-    def validate_audio_file(file):
-        """Alias for validate() to match external usage."""
-        AudioValidator.validate(file)
+    def validate_audio_file(file: Union[IO, any]):
+        # Use `name` if available, else skip extension check
+        if not hasattr(file, 'name'):
+            return  # Skip extension check for in-memory audio
 
+        ext = Path(file.name).suffix.lower().lstrip('.')
+        if ext not in Config.ALLOWED_AUDIO_FORMATS:
+            raise ValidationError("Unsupported audio format")
+
+        # Only check size if `size` attribute exists
+        if hasattr(file, "size"):
+            size_mb = file.size / (1024 * 1024)
+            if size_mb > Config.MAX_FILE_SIZE_MB:
+                raise ValidationError("File too large")

@@ -1,4 +1,4 @@
-
+import io
 import os
 import tempfile
 import streamlit as st
@@ -47,14 +47,20 @@ def render_audio_analysis():
         st.divider()
 
         st.markdown("#### Record Audio")
-        audio_bytes = audio_recorder(
-            text="🎙️ Click to Record",
-            recording_color="#ef4444",
-            neutral_color="#6b7280",
-            icon_size="2x"
-        )
+        with st.form("record_audio_form"):
+            audio_bytes = audio_recorder(
+                text="🎙️ Click to Record",
+                recording_color="#ef4444",
+                neutral_color="#6b7280",
+                icon_size="2x"
+            )
+            record_submit = st.form_submit_button("🎵 Transcribe & Analyze Recording")
 
-        if audio_bytes:
+            st.write("🎧 Raw audio data:", "Available" if audio_bytes else "None")
+
+
+        if record_submit and audio_bytes:
+
             st.audio(audio_bytes, format="audio/wav")
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
@@ -63,7 +69,12 @@ def render_audio_analysis():
 
             try:
                 with open(temp_path, "rb") as f:
-                    result, transcription = APIClient.transcribe_and_moderate(f)
+                    audio_data = f.read()
+
+                audio_buffer = io.BytesIO(audio_data)
+                audio_buffer.name = "recorded.wav"
+
+                result, transcription = APIClient.transcribe_and_moderate(audio_buffer)
 
                 st.session_state.moderation_result = result.__dict__
                 st.session_state.transcription_result = transcription

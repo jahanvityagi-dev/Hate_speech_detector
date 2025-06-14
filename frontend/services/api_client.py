@@ -87,7 +87,7 @@ class APIClient:
         Returns:
             Tuple of (ModerationResult, transcription)
         """
-        files = {"file": (audio_file.name, audio_file.getvalue(), audio_file.type)}
+        files = {"file": (audio_file.name, audio_file.getvalue(), "audio/wav")}
         response = cls._make_request(Config.TRANSCRIBE_ENDPOINT, files=files)
         
         transcription = response.get('transcribed_text', '')
