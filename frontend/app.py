@@ -1,5 +1,3 @@
-# frontend/app.py
-
 import streamlit as st
 import logging
 from frontend.services.session import SessionState
