@@ -15,10 +15,12 @@ client = AzureOpenAI(
 LABELS = ["Hate", "Toxic", "Offensive", "Neutral", "Ambiguous"]
 
 class HateSpeechDetectionAgent:
+    error_handler = ErrorHandlerAgent()
     def __init__(self, deployment=None):
         self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT")
-        self.error_handler = ErrorHandlerAgent()
+        # self.error_handler = ErrorHandlerAgent()
 
+    @error_handler.handle_errors(agent_name="HateSpeechDetectionAgent", method="classify")
     def classify(self, input_text: str) -> dict:
         prompt = f"""
 You are a content moderation assistant. Classify the following text into one of the following categories:
@@ -39,23 +41,18 @@ Return your output in this JSON format:
   "explanation": "<brief reason>"
 }}
 """
-        try:
-            response = client.chat.completions.create(
-                model=self.deployment,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-            )
-            content = response.choices[0].message.content
-            result = json.loads(content)
+    
+        response = client.chat.completions.create(
+            model=self.deployment,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+        )
+        content = response.choices[0].message.content
+        result = json.loads(content)
+        # Validate the result
+        if result["label"] not in LABELS:
+            raise ValueError("Invalid label returned")
 
-            if result["label"] not in LABELS:
-                raise ValueError("Invalid label returned")
+        return result
 
-            return result
-
-        except Exception as e:
-            # return {
-            #     "label": "Ambiguous",
-            #     "explanation": f"Error: {str(e)}"
-            # }
-            return self.error_handler.handle_error("HateSpeechAgent", str(e))
+        

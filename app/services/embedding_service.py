@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer
 from app.services.faiss_service import FaissService
 import numpy as np
 import logging
+from datetime import datetime
 #from app.services.moderation_pipeline import load_policy_documents
 
 faiss_service = FaissService()
@@ -40,23 +41,18 @@ class EmbeddingService:
     Uses cosine similarity via inner product on unit-normalized vectors.
     """
 
-    # def __init__(self, embedding_model: str = "all-MiniLM-L6-v2"):
-    #     self.model = SentenceTransformer(embedding_model)
-    #     self.index = faiss.IndexFlatIP(384)  # Use inner product for cosine similarity
-    #     self.text_chunks = []
-    #     self.chunk_sources = []
+    
     def __init__(self, embedding_model: str = "all-MiniLM-L6-v2"):
         self.model = SentenceTransformer(embedding_model)
         index_exists = os.path.exists("app/vector_store/faiss_index.bin")
         mapping_exists = os.path.exists("app/vector_store/id_mapping.json")
 
         if index_exists and mapping_exists:
-            self.index, self.text_chunks, self.chunk_sources = faiss_service.load()
+            self.index, self.metadata = faiss_service.load()
         else:
             print("[EmbeddingService] Missing FAISS index or metadata. Rebuilding from policy documents...")
             self.index = faiss.IndexFlatIP(384)
-            self.text_chunks = []
-            self.chunk_sources = []
+            self.metadata = []
 
             documents = load_policy_documents()
             for source_file, chunks in documents.items():
@@ -73,23 +69,20 @@ class EmbeddingService:
         normalized_embeddings = normalize(raw_embeddings, axis=1)
         return normalized_embeddings
 
-    # def add_to_index(self, chunks, source_file):
-    #     """
-    #     Add text chunks (and source) to FAISS index.
-    #     """
-    #     embeddings = self.embed(chunks)
-    #     self.index.add(embeddings)
-    #     self.text_chunks.extend(chunks)
-    #     self.chunk_sources.extend([source_file] * len(chunks))
+    
     def add_to_index(self, chunks, source_file):
         embeddings = self.embed(chunks)
         self.index.add(embeddings)
-        self.text_chunks.extend(chunks)
-        self.chunk_sources.extend([source_file] * len(chunks))
-        
+        start_id = self.index.ntotal
+        for i, chunk in enumerate(chunks):
+            self.metadata.append({
+                "id": start_id + i,
+                "text": chunk,
+                "source_file": source_file,
+                "created_at": datetime.utcnow().isoformat()
+            })
         # Save updated FAISS index and metadata
-        faiss_service.save(self.index, self.text_chunks, self.chunk_sources)
-
+        faiss_service.save(self.index, self.metadata)
 
     
     def search(self, query_text, top_k=3):
@@ -97,12 +90,13 @@ class EmbeddingService:
         D, I = self.index.search(query_embedding.astype("float32"), top_k * 3)  # fetch more initially
 
         seen_texts = set()
-        seen_sources = set()
+        
         results = []
 
         for idx, score in zip(I[0], D[0]):
-            text = self.text_chunks[idx]
-            source = self.chunk_sources[idx]
+            entry = self.metadata[idx]
+            text = entry["text"]
+            source = entry["source_file"]
 
             # Avoid exact duplicates
             if text in seen_texts:
@@ -113,10 +107,11 @@ class EmbeddingService:
             results.append({
                 "text": text,
                 "source_file": source,
-                "score": round(float(score), 4)
+                "score": round(float(score), 4),
+                "created_at": entry["created_at"]
             })
             seen_texts.add(text)
-            seen_sources.add(source)
+            #seen_sources.add(source)
 
             if len(results) >= top_k:
                 break
@@ -124,12 +119,6 @@ class EmbeddingService:
         return results
 
 def regenerate_faiss_index_if_missing(force: bool = False):
-    """
-    Public method callable from CLI to regenerate FAISS index and metadata.
-
-    Args:
-        force (bool): If True, will delete existing index and mapping files and regenerate from policy docs.
-    """
     if force:
         if os.path.exists(INDEX_PATH):
             os.remove(INDEX_PATH)
@@ -137,29 +126,29 @@ def regenerate_faiss_index_if_missing(force: bool = False):
             os.remove(MAPPING_PATH)
         logger.info("[rebuild_index] Forced: Removed existing FAISS index and mapping.")
 
-    # Now check if index or metadata missing and regenerate if needed
     if not os.path.exists(INDEX_PATH) or not os.path.exists(MAPPING_PATH):
         logger.info("[rebuild_index] FAISS index or mapping missing. Regenerating...")
 
         documents = load_policy_documents()
         index = faiss.IndexFlatIP(EMBEDDING_DIM)
         model = SentenceTransformer("all-MiniLM-L6-v2")
+        metadata = []
 
-        all_chunks = []
-        all_sources = []
+        current_id = 0
+        for source_file, chunks in documents.items():
+            embeddings = normalize(model.encode(chunks, convert_to_numpy=True), axis=1)
+            index.add(embeddings)
 
-        for fname, chunks in documents.items():
-            all_chunks.extend(chunks)
-            all_sources.extend([fname] * len(chunks))
+            for chunk in chunks:
+                metadata.append({
+                    "id": current_id,
+                    "text": chunk,
+                    "source_file": source_file,
+                    "created_at": datetime.utcnow().isoformat()
+                })
+                current_id += 1
 
-        # Embed and normalize
-        raw_embeddings = model.encode(all_chunks, convert_to_numpy=True)
-        normalized_embeddings = normalize(raw_embeddings, axis=1)
-        index.add(normalized_embeddings)
-
-        # Save index and metadata
-        FaissService().save(index, all_chunks, all_sources)
-
+        FaissService().save(index, metadata)
         logger.info("[rebuild_index] Regeneration complete.")
     else:
         logger.info("[rebuild_index] Index and metadata already exist. Skipping regeneration.")

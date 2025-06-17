@@ -1,34 +1,58 @@
-# Dockerfile.backend
+# # Dockerfile.backend
+# FROM python:3.10-slim
+
+# # Set work directory
+# WORKDIR /app
+
+# # Install curl and ffmpeg (needed by Whisper and to install uv)
+# RUN apt-get update && apt-get install -y curl ffmpeg
+
+# # Install uv (fast Python package installer)
+# # RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+# #     mv ~/.cargo/bin/uv /usr/local/bin/uv
+
+# # Install uv and move to a directory in PATH
+# RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+#     mv /root/.local/bin/uv /usr/local/bin/uv
+
+
+# # Copy uv.lock for deterministic dependency installation
+# COPY uv.lock .
+# RUN uv pip sync --system uv.lock
+
+
+# # Sync dependencies with uv
+# # RUN uv pip sync uv.lock
+
+# # Copy the application code
+# COPY app/ ./app/
+
+# # Expose the FastAPI port
+# EXPOSE 8000
+
+# # Command to run FastAPI app
+# CMD ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 FROM python:3.10-slim
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Install curl and ffmpeg (needed by Whisper and to install uv)
-RUN apt-get update && apt-get install -y curl ffmpeg
+# Install system dependencies
+RUN apt-get update && apt-get install -y ffmpeg && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install uv (fast Python package installer)
-# RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-#     mv ~/.cargo/bin/uv /usr/local/bin/uv
+# Copy requirements
+COPY requirements.txt .
 
-# Install uv and move to a directory in PATH
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    mv /root/.local/bin/uv /usr/local/bin/uv
+# Install dependencies (from official CPU-only torch repo)
+RUN pip install --upgrade pip && \
+    pip install torch==2.2.2+cpu -f https://download.pytorch.org/whl/torch_stable.html && \
+    pip install -r requirements.txt
 
-
-# Copy uv.lock for deterministic dependency installation
-COPY uv.lock .
-RUN uv pip sync --system uv.lock
-
-
-# Sync dependencies with uv
-# RUN uv pip sync uv.lock
-
-# Copy the application code
+# Copy app code
 COPY app/ ./app/
 
-# Expose the FastAPI port
+# Expose FastAPI port
 EXPOSE 8000
 
-# Command to run FastAPI app
+# Run app
 CMD ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

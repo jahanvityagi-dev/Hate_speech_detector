@@ -14,14 +14,4 @@ services:
       - ./data:/app/data
     restart: always
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "8501:8501"
-    volumes:
-      - ./frontend:/frontend
-    depends_on:
-      - backend
-    restart: always
+  

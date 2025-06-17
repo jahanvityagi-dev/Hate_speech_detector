@@ -3,8 +3,11 @@ class ActionRecommenderAgent:
     """
     Maps classification labels to moderation actions.
     """
+    error_handler = ErrorHandlerAgent()
 
     def __init__(self):
+        # error_handler = ErrorHandlerAgent()
+
         self.action_map = {
             "Hate": {
                 "action": "Ban",
@@ -28,9 +31,8 @@ class ActionRecommenderAgent:
             }
             
         }
-        self.error_handler = ErrorHandlerAgent()
-
-
+        
+    @error_handler.handle_errors(agent_name="ActionRecommenderAgent", method="recommend")
     def recommend(self, label: str) -> dict:
         """
         Returns recommended action and explanation for a classification label.
@@ -39,10 +41,9 @@ class ActionRecommenderAgent:
         #     "action": "Manual Review",
         #     "reason": "Unknown label; escalate to a moderator."
         # })
-        try:
-            return self.action_map.get(label, {
-                "action": "Manual Review",
-                "reason": "Unknown label; escalate to a moderator."
-            })
-        except Exception as e:
-            return self.error_handler.handle_error("ActionRecommenderAgent::recommend", str(e))
+        
+        return self.action_map.get(label, {
+            "action": "Manual Review",
+            "reason": "Unknown label; escalate to a moderator."
+        })
+    

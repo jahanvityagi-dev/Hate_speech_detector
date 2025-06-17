@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import requests
 from frontend.config import Config

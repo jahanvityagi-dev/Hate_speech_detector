@@ -1,4 +1,4 @@
-
+import functools
 import logging
 import traceback
 from fastapi import HTTPException
@@ -65,3 +65,20 @@ class ErrorHandlerAgent:
                     error_msg = detail if isinstance(detail, str) else str(detail)
                     return JSONResponse(status_code=e.status_code, content={"error": error_msg})
             return self.handle_error(e)
+        
+
+    def handle_errors(self, agent_name="UnknownAgent", method="unknown_method"):
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return self.safe_execute(func, *args, agent_name=agent_name, method=method, **kwargs)
+            return wrapper
+        return decorator
+
+    def handle_errors_async(self, agent_name="UnknownAgent", method="unknown_method"):
+        def decorator(func):
+            @functools.wraps(func)
+            async def wrapper(*args, **kwargs):
+                return await self.safe_execute_async(func, *args, agent_name=agent_name, method=method, **kwargs)
+            return wrapper
+        return decorator
