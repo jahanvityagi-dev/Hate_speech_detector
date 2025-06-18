@@ -18,7 +18,7 @@ class HateSpeechDetectionAgent:
     error_handler = ErrorHandlerAgent()
     def __init__(self, deployment=None):
         self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT")
-        # self.error_handler = ErrorHandlerAgent()
+        
 
     @error_handler.handle_errors(agent_name="HateSpeechDetectionAgent", method="classify")
     def classify(self, input_text: str) -> dict:
@@ -49,7 +49,7 @@ Return your output in this JSON format:
         )
         content = response.choices[0].message.content
         result = json.loads(content)
-        # Validate the result
+ 
         if result["label"] not in LABELS:
             raise ValueError("Invalid label returned")
 

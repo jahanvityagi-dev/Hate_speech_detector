@@ -6,7 +6,7 @@ class ActionRecommenderAgent:
     error_handler = ErrorHandlerAgent()
 
     def __init__(self):
-        # error_handler = ErrorHandlerAgent()
+      
 
         self.action_map = {
             "Hate": {
@@ -37,10 +37,7 @@ class ActionRecommenderAgent:
         """
         Returns recommended action and explanation for a classification label.
         """
-        # return self.action_map.get(label, {
-        #     "action": "Manual Review",
-        #     "reason": "Unknown label; escalate to a moderator."
-        # })
+       
         
         return self.action_map.get(label, {
             "action": "Manual Review",

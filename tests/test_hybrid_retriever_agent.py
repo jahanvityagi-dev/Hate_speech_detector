@@ -70,15 +70,13 @@ def test_load_policy_documents_combines_titles(monkeypatch, tmp_path):
     monkeypatch.setattr(hr_module, "EmbeddingService", DummyEmbeddingService)
     agent = HybridRetrieverAgent(policy_dir=str(tmp_path))
     dummy_es = agent.embedding_service  # this is an instance of DummyEmbeddingService
-    # After initialization, DummyEmbeddingService.add_to_index should have been called for each file
+   
     calls = dummy_es.add_calls
-    # There should be two calls (one per file)
+    
     assert len(calls) == 2, f"Expected 2 files to be processed, got {len(calls)}"
-    # Verify first file combined chunks
+    
     chunks1, source1 = calls[0]
-    # The first file should produce 2 combined chunks:
-    #  - Title + first paragraph
-    #  - Second paragraph alone
+    
     assert source1 == "policy1.txt"
     assert len(chunks1) == 2, f"Expected 2 combined chunks from file1, got {len(chunks1)}"
     assert "Policy Title Example" in chunks1[0] and "should be combined" in chunks1[0], "Title and paragraph not combined correctly"
@@ -164,5 +162,13 @@ def test_retrieve_handles_search_error(monkeypatch, tmp_path):
         agent.retrieve("sample", 1)
 
     assert "Search failed" in str(excinfo.value.detail)
+
+def test_retrieve_returns_metadata(monkeypatch):
+    agent = HybridRetrieverAgent()
+    agent.embedding_service = DummyEmbeddingService()
+    agent.embedding_service.add_to_index(["a", "b", "c"], "file.txt")
+    results = agent.retrieve("query", top_k=2)
+    assert isinstance(results, list)
+    assert all("text" in r and "source_file" in r for r in results)
 
 

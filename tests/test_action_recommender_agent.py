@@ -1,28 +1,4 @@
-# from app.agents.action_recommender_agent import ActionRecommenderAgent
 
-# def test_recommend_action_hate():
-#     agent = ActionRecommenderAgent()
-#     result = agent.recommend_action("Hate")
-#     assert result["action"] == "Ban"
-#     assert "hate" in result["reason"].lower()
-
-# def test_recommend_action_offensive():
-#     agent = ActionRecommenderAgent()
-#     result = agent.recommend_action("Offensive")
-#     assert result["action"] == "Warn"
-#     assert "offensive" in result["reason"].lower()
-
-# def test_recommend_action_neutral():
-#     agent = ActionRecommenderAgent()
-#     result = agent.recommend_action("Neutral")
-#     assert result["action"] == "Allow"
-#     assert "no action" in result["reason"].lower()
-
-# def test_recommend_action_unknown():
-#     agent = ActionRecommenderAgent()
-#     result = agent.recommend_action("SomethingElse")
-#     assert result["action"] == "Review"
-#     assert "manual review" in result["reason"].lower()
 import pytest
 from fastapi import HTTPException
 from app.agents.action_recommender_agent import ActionRecommenderAgent

@@ -8,10 +8,10 @@ from app.services.faiss_service import FaissService
 import numpy as np
 import logging
 from datetime import datetime
-#from app.services.moderation_pipeline import load_policy_documents
+
 
 faiss_service = FaissService()
-#
+
 INDEX_PATH = "app/vector_store/faiss_index.bin"
 MAPPING_PATH = "app/vector_store/id_mapping.json"
 EMBEDDING_DIM = 384
@@ -81,19 +81,19 @@ class EmbeddingService:
                 "source_file": source_file,
                 "created_at": datetime.utcnow().isoformat()
             })
-        # Save updated FAISS index and metadata
+       
         faiss_service.save(self.index, self.metadata)
 
     
     def search(self, query_text, top_k=3):
         query_embedding = self.embed([query_text])
-        D, I = self.index.search(query_embedding.astype("float32"), top_k * 3)  # fetch more initially
+        Distances, Indices = self.index.search(query_embedding.astype("float32"), top_k * 3)  # fetch more initially
 
         seen_texts = set()
         
         results = []
 
-        for idx, score in zip(I[0], D[0]):
+        for idx, score in zip(Indices[0], Distances[0]):
             entry = self.metadata[idx]
             text = entry["text"]
             source = entry["source_file"]
@@ -111,7 +111,7 @@ class EmbeddingService:
                 "created_at": entry["created_at"]
             })
             seen_texts.add(text)
-            #seen_sources.add(source)
+            
 
             if len(results) >= top_k:
                 break

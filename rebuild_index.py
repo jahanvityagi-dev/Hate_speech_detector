@@ -3,10 +3,10 @@ import logging
 from dotenv import load_dotenv
 from app.services.embedding_service import regenerate_faiss_index_if_missing
 
-# Load environment variables from .env
+
 load_dotenv()
 
-# Set up basic logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("RebuildIndexCLI")
 

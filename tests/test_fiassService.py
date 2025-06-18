@@ -115,3 +115,18 @@ def test_save_and_load_index(monkeypatch, tmp_path):
     assert loaded_chunks == chunks
     assert loaded_sources == sources
 
+def test_save_and_load_metadata(tmp_path):
+    from app.services.faiss_service import FaissService
+    import numpy as np
+    import faiss
+
+    index_path = tmp_path / "faiss_index.bin"
+    metadata_path = tmp_path / "id_mapping.json"
+    service = FaissService(str(index_path), str(metadata_path), 384)
+    index = faiss.IndexFlatIP(384)
+    metadata = [{"text": "chunk1", "source_file": "file1.txt"}]
+    service.save(index, metadata)
+    loaded_index, loaded_metadata = service.load()
+    assert isinstance(loaded_metadata, list)
+    assert loaded_metadata[0]["text"] == "chunk1"
+

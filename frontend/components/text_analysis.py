@@ -6,7 +6,7 @@ from core.models import ModerationResult
 
 
 def render_text_analysis():
-    st.markdown("<h2 class='section-header'>💬 Text Analysis</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header'> Text Analysis</h2>", unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
     user_input = st.text_area(
@@ -19,9 +19,9 @@ def render_text_analysis():
     if user_input:
         try:
             cleaned_text = TextValidator.validate_text(user_input)
-            st.success("✅ Text is valid for analysis")
+            st.success(" Text is valid for analysis")
         except ValidationError as e:
-            st.error(f"❌ {str(e)}")
+            st.error(f" {str(e)}")
 
     col1, col2, col3 = st.columns([3, 1, 1])
     with col1:

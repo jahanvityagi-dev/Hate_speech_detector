@@ -17,7 +17,7 @@ def render_audio_analysis():
     with st.container():
         st.markdown('<div class="audio-section">', unsafe_allow_html=True)
 
-        st.info("📝 Upload an audio file or record directly using your microphone. The audio will be transcribed and analyzed for hate speech.")
+        st.info(" Upload an audio file or record directly using your microphone. The audio will be transcribed and analyzed for hate speech.")
 
         st.markdown("#### Upload Audio File")
         uploaded_file = st.file_uploader(
@@ -33,7 +33,7 @@ def render_audio_analysis():
                 st.audio(uploaded_file, format=f'audio/{uploaded_file.type.split("/")[-1]}')
 
                 file_size_mb = uploaded_file.size / (1024 * 1024)
-                st.success(f"✅ File validated: {file_size_mb:.1f}MB")
+                st.success(f" File validated: {file_size_mb:.1f}MB")
 
                 analyze_upload_clicked = st.button(
                     "🎵 Transcribe & Analyze Upload", 
@@ -42,7 +42,7 @@ def render_audio_analysis():
                 )
 
             except ValidationError as e:
-                st.error(f"❌ {str(e)}")
+                st.error(f" {str(e)}")
 
         st.divider()
 
@@ -56,7 +56,7 @@ def render_audio_analysis():
             )
             record_submit = st.form_submit_button("🎵 Transcribe & Analyze Recording")
 
-            st.write("🎧 Raw audio data:", "Available" if audio_bytes else "None")
+            st.write(" Raw audio data:", "Available" if audio_bytes else "None")
 
 
         if record_submit and audio_bytes:
@@ -82,7 +82,7 @@ def render_audio_analysis():
                 st.rerun()
 
             except Exception as e:
-                st.error(f"❌ Processing error: {str(e)}")
+                st.error(f" Processing error: {str(e)}")
                 logger.error(f"Audio processing error: {e}")
 
             finally:

@@ -6,7 +6,7 @@ import json
 
 INDEX_PATH = "app/vector_store/faiss_index.bin"
 MAPPING_PATH = "app/vector_store/id_mapping.json"
-EMBEDDING_DIM = 384  # or 768, depending on your model
+EMBEDDING_DIM = 384 
 
 class FaissService:
     def __init__(self, index_path="app/vector_store/faiss_index.bin", metadata_path="app/vector_store/id_mapping.json", dim=384):
