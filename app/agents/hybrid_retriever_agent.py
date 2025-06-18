@@ -1,109 +1,43 @@
-import os
-import faiss
-import numpy as np
-from pathlib import Path
+import os, logging
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_core.documents import Document
 from app.services.embedding_service import EmbeddingService
+from app import config
 from app.agents.error_handler_agent import ErrorHandlerAgent
 
-POLICY_DIR = Path("data/policy_docs/")
-EMBEDDING_DIM = 384  # for MiniLM
-TOP_K = 3
-
-# class HybridRetrieverAgent:
-#     def __init__(self):
-#         self.embedding_service = EmbeddingService()
-#         self.index = faiss.IndexFlatL2(EMBEDDING_DIM)
-#         self.text_chunks = []
-#         self.chunk_sources = []
-#         self._load_policy_documents()
-
-#     def _load_policy_documents(self):
-#         for file in POLICY_DIR.glob("*.txt"):
-#             with open(file, "r", encoding="utf-8") as f:
-#                 content = f.read()
-
-#             chunks = [para.strip() for para in content.split("\n\n") if len(para.strip()) > 30]
-#             print(f"Loaded {len(chunks)} chunks from {file.name}")
-
-#             self.text_chunks.extend(chunks)
-#             self.chunk_sources.extend([file.name] * len(chunks))
-
-#         if not self.text_chunks:
-#             raise ValueError("No valid text chunks found in policy_docs/.")
-
-#         embeddings = self.embedding_service.embed(self.text_chunks)
-#         print(f"Built embeddings with shape: {embeddings.shape}")
-#         self.index.add(np.array(embeddings).astype("float32"))
-
-#     def retrieve(self, input_text: str, k: int = TOP_K):
-#         """
-#         Embeds the input_text and retrieves top-k policy chunks.
-#         Returns: List of dicts: {text, source_file, score}
-#         """
-#         query_embedding = self.embedding_service.embed([input_text])
-#         D, I = self.index.search(query_embedding.astype("float32"), k)
-
-#         results = []
-#         for rank, idx in enumerate(I[0]):
-#             results.append({
-#                 "text": self.text_chunks[idx],
-#                 "source_file": self.chunk_sources[idx],
-#                 "score": float(D[0][rank])
-#             })
-
-#         return results
-from pathlib import Path
-from app.services.embedding_service import EmbeddingService
-
-
 class HybridRetrieverAgent:
-    """
-    Loads and indexes policy documents, retrieves top relevant chunks
-    using cosine similarity on normalized sentence embeddings.
-    """
-    error_handler = ErrorHandlerAgent()
-    def __init__(self, policy_dir="data/policy_docs"):
+    def __init__(self):
+        self.error_handler = ErrorHandlerAgent()
+        # Load embedding model for vectorstore
+        embedding_model = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
         self.embedding_service = EmbeddingService()
-        self.policy_dir = Path(policy_dir)
-        self._load_policy_documents()
-        
-    def _load_policy_documents(self):
+        if not embedding_model.startswith("sentence-transformers/"):
+            embedding_model = f"sentence-transformers/{embedding_model}"
+        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        # Load FAISS vector store from disk
         try:
-            for file in self.policy_dir.glob("*.txt"):
-                with open(file, "r", encoding="utf-8") as f:
-                    content = f.read()
-
-                raw_chunks = [para.strip() for para in content.split("\n\n") if len(para.strip()) > 30]
-                combined_chunks = []
-                skip_next = False
-
-                for i in range(len(raw_chunks)):
-                    if skip_next:
-                        skip_next = False
-                        continue
-
-                    if raw_chunks[i].lower().startswith("title:"):
-                        # Combine title + next paragraph
-                        if i + 1 < len(raw_chunks):
-                            combined = f"{raw_chunks[i]}\n\n{raw_chunks[i+1]}"
-                            combined_chunks.append(combined)
-                            skip_next = True
-                        else:
-                            combined_chunks.append(raw_chunks[i])
-                    else:
-                        combined_chunks.append(raw_chunks[i])
-
-                print(f"Loaded {len(combined_chunks)} combined chunks from {file.name}")
-                self.embedding_service.add_to_index(combined_chunks, file.name)
-
-            print(f"Built embeddings with shape: {self.embedding_service.index.ntotal, 384}")
-
+            self.vectorstore = FAISS.load_local(
+                config.VECTOR_STORE_DIR, 
+                embeddings=self.embeddings,
+                allow_dangerous_deserialization=True
+            )
         except Exception as e:
-            self.error_handler.handle_error("HybridRetrieverAgent::_load_policy_documents", str(e))
+            logging.getLogger(__name__).error(
+                f"[HybridRetrieverAgent] Failed to load FAISS index from `{config.VECTOR_STORE_DIR}`: {e}"
+            )
+            # Raise or handle as needed (stop initialization if index missing)
+            raise
+        # Log successful load
+        doc_count = getattr(self.vectorstore.index, "ntotal", 0)
+        logging.getLogger(__name__).info(f"[HybridRetrieverAgent] Loaded FAISS index with {doc_count} documents.")
 
-    @error_handler.handle_errors(agent_name="HybridRetrieverAgent", method="retrieve")
-    def retrieve(self, input_text, top_k=3):
-        # return self.embedding_service.search(input_text, top_k)
-        
-        return self.embedding_service.search(input_text, top_k)
-        
+    def retrieve(self, query: str) -> list[dict]:
+        """Retrieve relevant policy text snippets for the given input query."""
+        try:
+            # Use the centralized EmbeddingService search
+            snippets = self.embedding_service.search(query, top_k=3)
+            return snippets
+        except Exception as e:
+            return self.error_handler.handle_error("HybridRetrieverAgent", str(e))
+

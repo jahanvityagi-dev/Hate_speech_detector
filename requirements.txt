@@ -5,6 +5,9 @@ annotated-types==0.7.0
 anyio==4.9.0
 attrs==25.3.0
 audio-recorder-streamlit==0.0.10
+openai
+tiktoken
+langchain-community
 av==14.4.0
 blinker==1.9.0
 cachetools==5.5.2
