@@ -18,25 +18,21 @@ def test_classify_valid_label(monkeypatch, dummy_openai_client_factory):
     assert result["label"] == "Hate"
     assert result["explanation"] == "Test explanation"
 
-def test_classify_invalid_label(monkeypatch, dummy_openai_client_factory, dummy_error_handler):
-    """If the model returns an invalid label, classify should call error_handler and return its output."""
+def test_classify_invalid_label(monkeypatch, dummy_openai_client_factory):
+    """If the model returns an invalid label, classify should raise HTTPException."""
     # Dummy response with a label not in the allowed LABELS list
     bad_content = json.dumps({"label": "NotValid", "explanation": "Irrelevant"})
     dummy_client = dummy_openai_client_factory(bad_content)
     monkeypatch.setattr(hs_module, "client", dummy_client)
     agent = HateSpeechDetectionAgent(deployment="dummy")
-    # Inject dummy error handler to capture error handling without raising
-    agent.error_handler = dummy_error_handler
-    result = agent.classify("Test text")
-    # It should have called error_handler.handle_error due to invalid label
-    assert dummy_error_handler.calls, "Error handler was not called for invalid label"
-    call_args = dummy_error_handler.calls[0]
-    # The HateSpeechDetectionAgent code calls handle_error("HateSpeechAgent", error_message)
-    assert call_args[0] == "HateSpeechAgent"
-    assert "Invalid label returned" in call_args[1]
-    # The result should be the dummy error dict returned by DummyErrorHandlerAgent
-    assert result.get("error"), "No error output returned for invalid label"
-    assert "Invalid label returned" in result["error"]
+    # Now check that HTTPException is raised
+    with pytest.raises(HTTPException) as excinfo:
+        agent.classify("Test text")
+
+    exc = excinfo.value
+    assert exc.status_code == 500
+    assert "Invalid label returned" in str(exc.detail)
+
 
 def test_classify_response_not_json(monkeypatch, dummy_openai_client_factory):
     """If the model returns non-JSON content, classify should raise an HTTPException via error_handler."""
@@ -55,24 +51,23 @@ def test_classify_response_not_json(monkeypatch, dummy_openai_client_factory):
     # Check that some JSON decode error indication is in the detail (e.g., 'Expecting value')
     assert "Expecting value" in detail_str or "JSONDecodeError" in detail_str, "JSON parse error not reflected in exception detail"
 
-def test_classify_api_exception(monkeypatch, dummy_error_handler):
-    """If the OpenAI API call fails, classify should use error_handler and return an error structure."""
-    # Create a dummy client whose create() method raises an exception to simulate API failure
+def test_classify_api_exception(monkeypatch):
+    """If the OpenAI API call fails, classify should raise HTTPException."""
+    # Dummy client whose create raises exception
     class FailingClient:
         def __init__(self):
             self.chat = self
             self.completions = self
         def create(self, **kwargs):
             raise RuntimeError("API failure")
+
     monkeypatch.setattr(hs_module, "client", FailingClient())
     agent = HateSpeechDetectionAgent(deployment="dummy")
-    agent.error_handler = dummy_error_handler  # inject dummy handler to capture output
-    result = agent.classify("some input text")
-    # Ensure the dummy error handler was invoked due to the exception
-    assert dummy_error_handler.calls, "Error handler not called on API exception"
-    call_args = dummy_error_handler.calls[0]
-    assert call_args[0] == "HateSpeechAgent"  # context passed to error handler
-    assert "API failure" in call_args[1]      # error message passed to error handler
-    # The result should be the dummy error dictionary
-    assert result.get("error") is not None
-    assert "API failure" in result["error"]
+
+    with pytest.raises(HTTPException) as excinfo:
+        agent.classify("some input text")
+
+    exc = excinfo.value
+    assert exc.status_code == 500
+    assert "API failure" in str(exc.detail)
+

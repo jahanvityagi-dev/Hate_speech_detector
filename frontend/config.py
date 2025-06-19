@@ -1,5 +1,5 @@
 class Config:
-    BACKEND_URL = "http://localhost:8000"
+    BACKEND_URL = "http://backend:8000"
     MODERATE_ENDPOINT = f"{BACKEND_URL}/moderate"
     TRANSCRIBE_ENDPOINT = f"{BACKEND_URL}/transcribe-audio"
     REQUEST_TIMEOUT = 120
